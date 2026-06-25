@@ -1,0 +1,30 @@
+# Composants clonés au build (jamais commités ici — voir .github/workflows/build.yml)
+/core/
+/app/
+/books/
+/calendar/
+/chat/
+/code/
+/contacts/
+/drive/
+/flow/
+/forms/
+/forum/
+/jarvis/
+/keestore/
+/mail/
+/maps/
+/media/
+/notes/
+/office/
+/paintsharp/
+/photos/
+/tasks/
+/wiki/
+
+# Secrets & artefacts
+.env
+_artifacts/
+**/target/
+**/node_modules/
+**/dist/

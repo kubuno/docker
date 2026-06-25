@@ -1,0 +1,4 @@
+# Contexte minimal pour Dockerfile.local : seul le rootfs pré-assemblé sur
+# l'hôte est envoyé au démon (cf. _tools/docker/build.sh → _artifacts/docker-rootfs).
+**
+!_artifacts/docker-rootfs/**

@@ -1,0 +1,10 @@
+# Déploiement depuis l'image PUBLIÉE (pas de compilation locale, pas besoin des
+# 21 dépôts) — le self-hosteur n'a que ce fichier + docker-compose.yml + .env.
+#
+#   echo "$GHCR_TOKEN" | docker login ghcr.io -u <user> --password-stdin   # si privé
+#   KUBUNO_TAG=0.1.0 docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+#   KUBUNO_TAG=0.1.0 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+services:
+  kubuno:
+    build: !reset null
+    image: ${KUBUNO_IMAGE:-ghcr.io/kubuno/kubuno}:${KUBUNO_TAG:-latest}

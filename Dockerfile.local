@@ -1,0 +1,61 @@
+# syntax=docker/dockerfile:1
+# ─────────────────────────────────────────────────────────────────────────────
+# Kubuno — image runtime « pré-buildée ».
+#
+# N'embarque PAS de compilateur : empaquète un rootfs (binaires + frontends +
+# configs) DÉJÀ assemblé sur l'HÔTE par _tools/docker/build.sh. À privilégier
+# sur un hôte dont la partition Docker (/var/lib/docker) est trop petite pour une
+# compilation complète, ou pour itérer vite.
+#
+#   1. Assembler le rootfs sur l'hôte (compile core + modules ; CLEAN=1 borne le
+#      pic disque mais EFFACE les caches cargo des dépôts — mettre CLEAN=0 pour
+#      les conserver si vous avez la place) :
+#        MODULES="drive calendar notes" \
+#        SRC="$PWD" OUT="$PWD/_artifacts/docker-rootfs" CLEAN=1 \
+#        bash _tools/docker/build.sh
+#   2. Construire l'image (base runtime à glibc >= celle de l'hôte de build ;
+#      hôte Ubuntu 24.04 → glibc 2.39) :
+#        docker build -f Dockerfile.local --build-arg RUNTIME_BASE=ubuntu:24.04 \
+#          --build-arg MODULES="drive calendar notes" -t kubuno:local .
+#   3. Lancer :
+#        docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+# ─────────────────────────────────────────────────────────────────────────────
+ARG MODULES="app books calendar chat code contacts drive flow forms forum jarvis keestore mail maps media notes office paintsharp photos tasks wiki"
+ARG RUNTIME_BASE=debian:bookworm-slim
+FROM ${RUNTIME_BASE}
+ARG MODULES
+
+# libssl3 : reqwest/native-tls · curl : healthcheck · ffmpeg : transcodage media.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates libssl3 curl ffmpeg \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --no-create-home --shell /usr/sbin/nologin kubuno
+
+# Rootfs assemblé sur l'hôte (cf. _tools/docker/build.sh).
+COPY _artifacts/docker-rootfs/ /
+
+RUN set -eux; \
+    mkdir -p /var/lib/kubuno/files /var/lib/kubuno/themes /var/log/kubuno; \
+    for m in ${MODULES}; do \
+      mkdir -p "/var/lib/kubuno/modules/$m/data" "/var/lib/kubuno/modules/$m/temp" "/etc/kubuno/modules/$m"; \
+    done; \
+    chown -R kubuno:kubuno /var/lib/kubuno /var/log/kubuno
+
+ENV KV__SERVER__HOST=0.0.0.0 \
+    KV__SERVER__PORT=8080 \
+    KV__SERVER__FRONTEND_DIST=/usr/share/kubuno/frontend \
+    KV__SERVER__MODULES_DIR=/usr/lib/kubuno/modules \
+    KV__STORAGE__BACKEND=local \
+    KV__STORAGE__LOCAL_PATH=/var/lib/kubuno/files \
+    KV__DATABASE__RUN_MIGRATIONS=true \
+    KV__LOGGING__FILE_ENABLED=false \
+    KV__LOGGING__FORMAT=json
+
+EXPOSE 8080
+USER kubuno
+WORKDIR /var/lib/kubuno
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=40s --retries=6 \
+    CMD curl -fsS http://localhost:8080/health || exit 1
+
+ENTRYPOINT ["/usr/bin/kubuno-core"]

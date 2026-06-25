@@ -1,0 +1,60 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Kubuno — déploiement Docker self-hosted (pilote : core + drive).
+#
+#   1. cp .env.docker.example .env      (puis renseigner les secrets)
+#   2. docker compose up --build -d
+#   3. http://localhost:8080  (admin créé via l'inscription / la CLI)
+#
+# Une seule instance PostgreSQL : schéma `core` + un schéma par module.
+# Le user Postgres est superutilisateur (image officielle) → CREATE EXTENSION
+# (uuid-ossp, pg_trgm, unaccent, citext) requis par les migrations fonctionne.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kubuno}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?définissez POSTGRES_PASSWORD dans .env}
+      POSTGRES_DB: ${POSTGRES_DB:-kubuno}
+    volumes:
+      - kubuno-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kubuno} -d ${POSTGRES_DB:-kubuno}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  kubuno:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Connexion DB — le core répercute ces credentials aux modules enfants.
+      KV__DATABASE__HOST: db
+      KV__DATABASE__PORT: "5432"
+      KV__DATABASE__USER: ${POSTGRES_USER:-kubuno}
+      KV__DATABASE__PASSWORD: ${POSTGRES_PASSWORD:?définissez POSTGRES_PASSWORD dans .env}
+      KV__DATABASE__DATABASE: ${POSTGRES_DB:-kubuno}
+      # Secrets — OBLIGATOIRES (voir .env.docker.example pour les générer).
+      KV__AUTH__JWT_SECRET: ${KUBUNO_JWT_SECRET:?définissez KUBUNO_JWT_SECRET dans .env}
+      KV__SERVER__INTERNAL_SECRET: ${KUBUNO_INTERNAL_SECRET:?définissez KUBUNO_INTERNAL_SECRET dans .env}
+      # Mettre à true derrière un reverse-proxy HTTPS.
+      KV__SERVER__SECURE_COOKIES: "false"
+      # Compte admin initial (seedé au 1er démarrage si aucun admin n'existe).
+      KUBUNO_ADMIN_USER: ${KUBUNO_ADMIN_USER:-admin}
+      KUBUNO_ADMIN_PASSWORD: ${KUBUNO_ADMIN_PASSWORD:-kubuno}
+      KUBUNO_ADMIN_EMAIL: ${KUBUNO_ADMIN_EMAIL:-admin@kubuno.local}
+    ports:
+      - "${KUBUNO_PORT:-8080}:8080"
+    volumes:
+      - kubuno-data:/var/lib/kubuno
+    restart: unless-stopped
+
+volumes:
+  kubuno-db:
+  kubuno-data:
