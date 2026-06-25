@@ -1,0 +1,84 @@
+name: Build & publish image
+
+# L'image « tout-en-un » agrège le core + tous les modules. Ce dépôt ne contient
+# que l'outillage Docker ; la CI clone les composants (dépôts publics kubuno/*)
+# puis construit et pousse l'image vers GHCR.
+#
+# Déclenchement :
+#   - push d'un tag v*        → build + push (:<version> + :latest)
+#   - workflow_dispatch       → build manuel (option : sous-ensemble de modules,
+#                               et push on/off)
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      modules:
+        description: "Modules à inclure (vide = tous)"
+        required: false
+        default: ""
+      push:
+        description: "Pousser l'image ?"
+        type: boolean
+        default: false
+
+env:
+  IMAGE: ghcr.io/kubuno/kubuno
+  ALL_MODULES: "app books calendar chat code contacts drive flow forms forum jarvis keestore mail maps media notes office paintsharp photos tasks wiki"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout (dépôt docker)
+        uses: actions/checkout@v4
+
+      - name: Libérer de l'espace disque sur le runner
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Cloner le core + les modules (dépôts publics)
+        run: |
+          set -e
+          MODS="${{ github.event.inputs.modules }}"
+          [ -z "$MODS" ] && MODS="${ALL_MODULES}"
+          for m in core $MODS; do
+            echo "::group::clone $m"
+            git clone --depth 1 "https://github.com/kubuno/$m.git" "$m"
+            echo "::endgroup::"
+          done
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Métadonnées (tags / labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: ${{ startsWith(github.ref, 'refs/tags/') || github.event.inputs.push == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            MODULES=${{ github.event.inputs.modules || env.ALL_MODULES }}

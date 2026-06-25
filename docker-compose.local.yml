@@ -1,0 +1,8 @@
+# Override pour utiliser l'image pré-buildée (Dockerfile.local) au lieu de la
+# compiler dans Docker. Usage :
+#   docker build -f Dockerfile.local -t kubuno:local .
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+services:
+  kubuno:
+    build: !reset null
+    image: kubuno:local

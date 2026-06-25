@@ -1,0 +1,26 @@
+# Réduit le contexte de build envoyé au démon Docker.
+# On garde les sources Rust/TS + Cargo.lock + caches .sqlx (build offline),
+# on exclut les artefacts lourds et reconstructibles.
+
+**/target
+**/node_modules
+**/dist
+**/dist-modules
+**/.git
+**/*.deb
+**/.build_number
+**/tsconfig.tsbuildinfo
+
+# Secrets & rootfs de build pré-assemblé — ne JAMAIS envoyer au démon
+.env
+.env.*
+!.env.docker.example
+_artifacts
+
+# Répertoires hors périmètre du build (archives, scratch, méta)
+_archive
+_org-github
+_profile
+_scratch_wasm_spike
+_tools/_repo_meta_backup
+memory
