@@ -27,6 +27,11 @@ MODULES="${MODULES:-}"
 CLEAN="${CLEAN:-1}"
 export SQLX_OFFLINE=true   # drive/media embarquent un cache .sqlx ; inoffensif ailleurs
 
+# Résilience réseau (flakes crates.io en CI : reset HTTP/2, downloads échoués).
+export CARGO_NET_RETRY="${CARGO_NET_RETRY:-10}"
+export CARGO_HTTP_MULTIPLEXING="${CARGO_HTTP_MULTIPLEXING:-false}"
+export CARGO_NET_GIT_FETCH_WITH_CLI="${CARGO_NET_GIT_FETCH_WITH_CLI:-true}"
+
 build_frontend() {  # $1 = répertoire frontend
   ( cd "$1" && { [ -f package-lock.json ] && npm ci || npm install; } && npm run build )
   # node_modules est volumineux et inutile une fois dist/ produit
