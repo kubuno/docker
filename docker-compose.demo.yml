@@ -1,0 +1,40 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Surcouche DURCISSEMENT pour une DÉMO publique — isolation maximale de l'hôte.
+#
+# À combiner avec la base + l'image publiée :
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.demo.yml up -d
+#
+# Déploiement conseillé : Docker ROOTLESS, sur un VPS dédié, derrière nginx (TLS).
+# L'app est bindée en LOOPBACK (127.0.0.1) → joignable uniquement par le nginx de
+# l'hôte (proxy_pass), jamais exposée sur l'IP publique. Postgres reste interne.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  db:
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    cap_add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]  # requis par postgres
+    mem_limit: 512m
+    cpus: "1.0"
+    pids_limit: 256
+    restart: unless-stopped
+
+  kubuno:
+    # Loopback uniquement : seul le reverse-proxy de l'hôte y accède.
+    ports: !override
+      - "127.0.0.1:${KUBUNO_PORT:-8090}:8080"
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]            # le core fork/exec ses modules sans capability
+    read_only: true             # rootfs en lecture seule (données = volume ; voir tmpfs)
+    tmpfs:
+      - /tmp:size=256m
+      - /var/log/kubuno:size=64m
+    mem_limit: 1500m
+    cpus: "2.0"
+    pids_limit: 512
+    restart: unless-stopped
+    environment:
+      # TLS terminé par nginx en frontal → cookies marqués Secure.
+      KV__SERVER__SECURE_COOKIES: "true"
+      # Garde-fous anti-abus pour une démo publique (req/min par IP, concurrence).
+      KV_SERVER_RATE_LIMIT_PER_MIN: "300"
+      KV_SERVER_MAX_CONCURRENT: "256"

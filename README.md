@@ -65,6 +65,9 @@ docker compose up --build -d                          # builds all modules local
 docker build --build-arg MODULES="drive calendar" .   # a subset
 ```
 
+Hosting a **public demo**? See **[DEMO.md](DEMO.md)** for a hardened, host-isolated
+setup (rootless Docker, dropped capabilities, read-only rootfs, loopback-only, nginx).
+
 See **[DOCKER.md](DOCKER.md)** for the full guide (configuration, HTTPS, persistence,
 disk requirements, choosing modules, publishing).
 
