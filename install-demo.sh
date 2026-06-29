@@ -124,7 +124,12 @@ for _ in $(seq 1 30); do [ -S "$RT/bus" ] && break; sleep 1; done
 [ -S "$RT/bus" ] || err "Session systemd de $DEMO_USER indisponible ($RT/bus). Vérifie 'loginctl enable-linger $DEMO_USER'."
 
 log "Installation de Docker rootless…"
+# Récupère les binaires rootless si absents (sinon réutilise ceux déjà présents).
 as_user "command -v dockerd-rootless-setuptool.sh >/dev/null 2>&1 || curl -fsSL https://get.docker.com/rootless | sh"
+# ⚠️ Étape qui CRÉE le service utilisateur ~/.config/systemd/user/docker.service.
+# Indispensable et idempotente (--force) : ne PAS la sauter même si les binaires existent.
+as_user "dockerd-rootless-setuptool.sh install --force" \
+  || err "Échec de 'dockerd-rootless-setuptool.sh install' (voir au-dessus). Vérifie subuid/subgid, slirp4netns, cgroup v2."
 as_user "systemctl --user daemon-reload"
 as_user "systemctl --user enable --now docker"   # 1er démarrage → crée ~/.local/share/docker
 
