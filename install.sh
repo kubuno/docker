@@ -38,6 +38,7 @@ ACME_EMAIL="${ACME_EMAIL:-}"
 ADMIN_USER="${ADMIN_USER:-}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
 ADMIN_EMAIL="${ADMIN_EMAIL:-}"
+AUTO_UPDATE="${AUTO_UPDATE:-1}"
 PORT_SET=""; TAG_SET=""
 
 usage() { sed -n '2,33p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
@@ -53,6 +54,7 @@ while [ $# -gt 0 ]; do
     --admin-user)     ADMIN_USER="${2:?}"; shift 2;;
     --admin-password) ADMIN_PASSWORD="${2:?}"; shift 2;;
     --admin-email)    ADMIN_EMAIL="${2:?}"; shift 2;;
+    --no-auto-update) AUTO_UPDATE=0; shift;;
     -h|--help)        usage 0;;
     *) printf 'Option inconnue : %s\n\n' "$1" >&2; usage 1;;
   esac
@@ -160,6 +162,21 @@ $SUDO docker compose "${FILES[@]}" pull
 log "Démarrage de la stack…"
 $SUDO docker compose "${FILES[@]}" up -d
 
+# ── 6b. Wrapper + auto-update ────────────────────────────────────────────────
+# Wrapper qui mémorise le jeu de fichiers compose (pour les commandes & le cron).
+$SUDO tee "$INSTALL_DIR/compose.sh" >/dev/null <<WRAP
+#!/usr/bin/env bash
+cd "\$(dirname "\$0")"
+exec docker compose ${FILES[*]} "\$@"
+WRAP
+$SUDO chmod +x "$INSTALL_DIR/compose.sh"
+
+if [ "$AUTO_UPDATE" = 1 ]; then
+  log "Auto-update quotidien (cron) — re-pull + restart si l'image a changé"
+  printf '30 4 * * * root %s/compose.sh pull -q && %s/compose.sh up -d --remove-orphans >> /var/log/kubuno-update.log 2>&1\n' \
+    "$INSTALL_DIR" "$INSTALL_DIR" | $SUDO tee /etc/cron.d/kubuno-update >/dev/null
+fi
+
 # ── 7. Résumé ────────────────────────────────────────────────────────────────
 EFF_PORT="$(grep -E '^KUBUNO_PORT=' .env | cut -d= -f2- | awk -F: '{print $NF}')"
 echo
@@ -172,5 +189,6 @@ else
 fi
 echo "  Admin   : ${ADMIN_USER:-admin} / ${ADMIN_PASSWORD:-kubuno}   (à changer dès la 1re connexion)"
 echo "  Dossier : ${INSTALL_DIR}   (config : ${INSTALL_DIR}/.env)"
-echo "  Logs    : cd ${INSTALL_DIR} && docker compose ${FILES[*]} logs -f"
-echo "  Arrêt   : cd ${INSTALL_DIR} && docker compose ${FILES[*]} down"
+echo "  Logs    : ${INSTALL_DIR}/compose.sh logs -f"
+echo "  Arrêt   : ${INSTALL_DIR}/compose.sh down"
+echo "  Update  : relancer ce script$( [ "$AUTO_UPDATE" = 1 ] && echo ' (ou via le cron quotidien)' )"
