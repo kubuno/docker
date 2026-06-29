@@ -22,6 +22,8 @@
 #   --admin-user <u>      identifiant admin initial  (défaut admin)
 #   --admin-password <p>  mot de passe admin initial (défaut kubuno)
 #   --admin-email <e>     e-mail admin initial
+#   --no-auto-update      ne pas installer le cron de mise à jour quotidienne
+#   --uninstall           désinstalle tout (conteneurs + volumes + images + cron + dossier)
 # (Les variables d'environnement de mêmes noms — KUBUNO_PORT, DOMAIN, … — restent
 #  acceptées en repli.)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -39,6 +41,7 @@ ADMIN_USER="${ADMIN_USER:-}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
 ADMIN_EMAIL="${ADMIN_EMAIL:-}"
 AUTO_UPDATE="${AUTO_UPDATE:-1}"
+UNINSTALL=0
 PORT_SET=""; TAG_SET=""
 
 usage() { sed -n '2,33p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
@@ -55,6 +58,7 @@ while [ $# -gt 0 ]; do
     --admin-password) ADMIN_PASSWORD="${2:?}"; shift 2;;
     --admin-email)    ADMIN_EMAIL="${2:?}"; shift 2;;
     --no-auto-update) AUTO_UPDATE=0; shift;;
+    --uninstall)      UNINSTALL=1; shift;;
     -h|--help)        usage 0;;
     *) printf 'Option inconnue : %s\n\n' "$1" >&2; usage 1;;
   esac
@@ -63,6 +67,23 @@ done
 log() { printf '\033[1;35m▸ %s\033[0m\n' "$*"; }
 err() { printf '\033[1;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo"
+
+# ── Désinstallation complète ─────────────────────────────────────────────────
+if [ "$UNINSTALL" = 1 ]; then
+  log "Désinstallation de Kubuno…"
+  if [ -x "$INSTALL_DIR/compose.sh" ]; then
+    "$INSTALL_DIR/compose.sh" down -v --rmi all --remove-orphans 2>/dev/null || true
+  elif [ -d "$INSTALL_DIR" ]; then
+    ( cd "$INSTALL_DIR" && $SUDO docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+        down -v --rmi all --remove-orphans 2>/dev/null ) || true
+  fi
+  $SUDO docker image rm -f "${IMAGE}:${KUBUNO_TAG}" "${IMAGE}:latest" 2>/dev/null || true
+  $SUDO rm -f /etc/cron.d/kubuno-update
+  $SUDO rm -rf "$INSTALL_DIR"
+  log "Désinstallé : conteneurs, volumes et images supprimés, ${INSTALL_DIR} retiré."
+  log "(Le moteur Docker système n'est pas touché.)"
+  exit 0
+fi
 
 # Générateur de secret portable (openssl sinon /dev/urandom).
 rand() { # $1 = -hex|-base64, $2 = nb octets
