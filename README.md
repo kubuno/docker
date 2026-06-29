@@ -31,16 +31,23 @@ curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install.sh | sud
 # → http://<server-ip>:8080   (default admin: admin / kubuno — change it!)
 ```
 
-With automatic HTTPS (Let's Encrypt via Caddy), just pass a domain:
+Pass options after `bash -s --` (reliable through `curl | bash`). Custom port:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install.sh | sudo bash -s -- --port 9000
+```
+
+Automatic HTTPS (Let's Encrypt via Caddy) — just give a domain (ports 80/443 must be open, DNS pointing to the server):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install.sh \
-  | sudo DOMAIN=cloud.example.com ACME_EMAIL=you@example.com bash
+  | sudo bash -s -- --domain cloud.example.com --email you@example.com
 # → https://cloud.example.com
 ```
 
 Re-run the same command anytime to update (it re-pulls and restarts; secrets are kept).
-See [`install.sh`](install.sh) for all variables (`KUBUNO_TAG`, `KUBUNO_PORT`, `ADMIN_*`…).
+Options: `--port`, `--domain`, `--email`, `--tag`, `--dir`, `--admin-user/-password/-email`
+(`install.sh --help`).
 
 ## Quick start (manual, from the published image)
 

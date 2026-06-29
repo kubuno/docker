@@ -9,39 +9,77 @@
 # Usage rapide :
 #   curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install.sh | sudo bash
 #
-# Avec HTTPS automatique (Let's Encrypt via Caddy) :
-#   curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install.sh \
-#     | sudo DOMAIN=cloud.mondomaine.fr ACME_EMAIL=moi@mondomaine.fr bash
+# Avec options (passer les arguments APRÈS `bash -s --`, fiable via curl|bash) :
+#   curl -fsSL .../install.sh | sudo bash -s -- --port 9000
+#   curl -fsSL .../install.sh | sudo bash -s -- --domain cloud.exemple.fr --email moi@exemple.fr
 #
-# Variables (toutes optionnelles) :
-#   INSTALL_DIR  répertoire d'install        (défaut /opt/kubuno)
-#   KUBUNO_TAG   tag d'image                 (défaut latest ; ex 0.1.2)
-#   KUBUNO_PORT  port HTTP exposé            (défaut 8080 ; ignoré si DOMAIN)
-#   DOMAIN       domaine → HTTPS auto (Caddy)
-#   ACME_EMAIL   e-mail Let's Encrypt        (recommandé avec DOMAIN)
-#   ADMIN_USER / ADMIN_PASSWORD / ADMIN_EMAIL  admin initial (sinon admin/kubuno)
+# Options :
+#   --port <p>            port HTTP exposé           (défaut 8080 ; ignoré si --domain)
+#   --domain <d>          domaine → HTTPS auto (Caddy, Let's Encrypt)
+#   --email <e>           e-mail Let's Encrypt       (recommandé avec --domain)
+#   --tag <t>             tag d'image                (défaut latest ; ex 0.1.2)
+#   --dir <path>          répertoire d'install       (défaut /opt/kubuno)
+#   --admin-user <u>      identifiant admin initial  (défaut admin)
+#   --admin-password <p>  mot de passe admin initial (défaut kubuno)
+#   --admin-email <e>     e-mail admin initial
+# (Les variables d'environnement de mêmes noms — KUBUNO_PORT, DOMAIN, … — restent
+#  acceptées en repli.)
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
+# Valeurs par défaut (surchargées par les options CLI ci-dessous).
 REPO_TARBALL="${KUBUNO_REPO_TARBALL:-https://github.com/kubuno/docker/archive/refs/heads/main.tar.gz}"
+IMAGE="${KUBUNO_IMAGE:-ghcr.io/kubuno/kubuno}"
 INSTALL_DIR="${INSTALL_DIR:-/opt/kubuno}"
 KUBUNO_TAG="${KUBUNO_TAG:-latest}"
 KUBUNO_PORT="${KUBUNO_PORT:-8080}"
 DOMAIN="${DOMAIN:-}"
 ACME_EMAIL="${ACME_EMAIL:-}"
-IMAGE="${KUBUNO_IMAGE:-ghcr.io/kubuno/kubuno}"
+ADMIN_USER="${ADMIN_USER:-}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
+ADMIN_EMAIL="${ADMIN_EMAIL:-}"
+PORT_SET=""; TAG_SET=""
+
+usage() { sed -n '2,33p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+
+# ── Parsing des options ──────────────────────────────────────────────────────
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --port)           KUBUNO_PORT="${2:?--port requiert une valeur}"; PORT_SET=1; shift 2;;
+    --domain)         DOMAIN="${2:?--domain requiert une valeur}"; shift 2;;
+    --email)          ACME_EMAIL="${2:?--email requiert une valeur}"; shift 2;;
+    --tag)            KUBUNO_TAG="${2:?--tag requiert une valeur}"; TAG_SET=1; shift 2;;
+    --dir)            INSTALL_DIR="${2:?--dir requiert une valeur}"; shift 2;;
+    --admin-user)     ADMIN_USER="${2:?}"; shift 2;;
+    --admin-password) ADMIN_PASSWORD="${2:?}"; shift 2;;
+    --admin-email)    ADMIN_EMAIL="${2:?}"; shift 2;;
+    -h|--help)        usage 0;;
+    *) printf 'Option inconnue : %s\n\n' "$1" >&2; usage 1;;
+  esac
+done
 
 log() { printf '\033[1;35m▸ %s\033[0m\n' "$*"; }
 err() { printf '\033[1;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
-
 SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo"
 
-# Petit générateur de secret portable (openssl sinon /dev/urandom).
+# Générateur de secret portable (openssl sinon /dev/urandom).
 rand() { # $1 = -hex|-base64, $2 = nb octets
   if command -v openssl >/dev/null 2>&1; then openssl rand "$1" "$2"
   elif [ "$1" = "-hex" ]; then head -c "$2" /dev/urandom | od -An -tx1 | tr -d ' \n'
   else head -c "$2" /dev/urandom | base64 | tr -d '\n'; fi
 }
+
+# Insère ou remplace une clé KEY=VALUE dans .env.
+upsert_env() {
+  if grep -qE "^$1=" .env 2>/dev/null; then
+    $SUDO sed -i "s|^$1=.*|$1=$2|" .env
+  else
+    printf '%s=%s\n' "$1" "$2" | $SUDO tee -a .env >/dev/null
+  fi
+}
+
+# Valeur de KUBUNO_PORT (avec liaison 127.0.0.1 quand un domaine/HTTPS est utilisé).
+port_bind() { if [ -n "$DOMAIN" ]; then echo "127.0.0.1:${KUBUNO_PORT}"; else echo "${KUBUNO_PORT}"; fi; }
 
 # ── 1. Docker ────────────────────────────────────────────────────────────────
 if ! command -v docker >/dev/null 2>&1; then
@@ -57,10 +95,9 @@ log "Téléchargement des fichiers (kubuno/docker)…"
 curl -fsSL "$REPO_TARBALL" | $SUDO tar xz --strip-components=1 -C "$INSTALL_DIR"
 cd "$INSTALL_DIR"
 
-# ── 3. .env (généré une seule fois ; secrets préservés ensuite) ───────────────
+# ── 3. .env (créé une fois ; secrets préservés ensuite) ───────────────────────
 if [ ! -f .env ]; then
   log "Génération de .env (secrets aléatoires)"
-  PORT_BIND="${KUBUNO_PORT}"; [ -n "$DOMAIN" ] && PORT_BIND="127.0.0.1:${KUBUNO_PORT}"
   {
     echo "POSTGRES_USER=kubuno"
     echo "POSTGRES_PASSWORD=$(rand -hex 16)"
@@ -68,18 +105,22 @@ if [ ! -f .env ]; then
     echo "KUBUNO_JWT_SECRET=$(rand -base64 48)"
     echo "KUBUNO_INTERNAL_SECRET=$(rand -hex 32)"
     echo "KUBUNO_TAG=${KUBUNO_TAG}"
-    echo "KUBUNO_PORT=${PORT_BIND}"
-    [ -n "$DOMAIN" ] && echo "DOMAIN=${DOMAIN}"
-    [ -n "${ADMIN_USER:-}" ]     && echo "KUBUNO_ADMIN_USER=${ADMIN_USER}"
-    [ -n "${ADMIN_PASSWORD:-}" ] && echo "KUBUNO_ADMIN_PASSWORD=${ADMIN_PASSWORD}"
-    [ -n "${ADMIN_EMAIL:-}" ]    && echo "KUBUNO_ADMIN_EMAIL=${ADMIN_EMAIL}"
+    echo "KUBUNO_PORT=$(port_bind)"
+    [ -n "$DOMAIN" ]         && echo "DOMAIN=${DOMAIN}"
+    [ -n "$ADMIN_USER" ]     && echo "KUBUNO_ADMIN_USER=${ADMIN_USER}"
+    [ -n "$ADMIN_PASSWORD" ] && echo "KUBUNO_ADMIN_PASSWORD=${ADMIN_PASSWORD}"
+    [ -n "$ADMIN_EMAIL" ]    && echo "KUBUNO_ADMIN_EMAIL=${ADMIN_EMAIL}"
   } | $SUDO tee .env >/dev/null
   $SUDO chmod 600 .env
 else
   log ".env existant conservé (secrets inchangés)"
 fi
 
-# DOMAIN effectif (argument, sinon valeur du .env)
+# Mises à jour idempotentes : appliquer les options explicitement passées.
+[ -n "$PORT_SET" ] && { upsert_env KUBUNO_PORT "$(port_bind)"; log "Port → $(port_bind)"; }
+[ -n "$TAG_SET" ]  && { upsert_env KUBUNO_TAG  "$KUBUNO_TAG";  log "Tag → $KUBUNO_TAG"; }
+
+# DOMAIN effectif (option, sinon valeur du .env existant).
 [ -z "$DOMAIN" ] && DOMAIN="$(grep -E '^DOMAIN=' .env 2>/dev/null | cut -d= -f2- || true)"
 
 # ── 4. Fichiers compose à utiliser ───────────────────────────────────────────
@@ -114,19 +155,20 @@ YAML
 fi
 
 # ── 6. Déploiement ───────────────────────────────────────────────────────────
-log "Pull de ${IMAGE}:${KUBUNO_TAG}…"
+log "Pull de $(grep -E '^KUBUNO_TAG=' .env | cut -d= -f2- | sed "s|^|${IMAGE}:|")…"
 $SUDO docker compose "${FILES[@]}" pull
 log "Démarrage de la stack…"
 $SUDO docker compose "${FILES[@]}" up -d
 
 # ── 7. Résumé ────────────────────────────────────────────────────────────────
+EFF_PORT="$(grep -E '^KUBUNO_PORT=' .env | cut -d= -f2- | awk -F: '{print $NF}')"
 echo
 log "Kubuno est démarré 🎉"
 if [ -n "$DOMAIN" ]; then
   echo "  URL     : https://${DOMAIN}  (certificat TLS automatique sous ~1 min)"
 else
   IP="$(hostname -I 2>/dev/null | awk '{print $1}')"; [ -z "$IP" ] && IP="<ip-serveur>"
-  echo "  URL     : http://${IP}:${KUBUNO_PORT}"
+  echo "  URL     : http://${IP}:${EFF_PORT}"
 fi
 echo "  Admin   : ${ADMIN_USER:-admin} / ${ADMIN_PASSWORD:-kubuno}   (à changer dès la 1re connexion)"
 echo "  Dossier : ${INSTALL_DIR}   (config : ${INSTALL_DIR}/.env)"
