@@ -13,6 +13,9 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install-demo.sh | sudo bash
 #   ... | sudo bash -s -- --port 8090 --cap-mb 1024 --quota-mb 100 --ttl-hours 24
+#
+# Désinstaller complètement (conteneurs + volumes + images + cap disque + user) :
+#   curl -fsSL .../install-demo.sh | sudo bash -s -- --uninstall
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -24,6 +27,7 @@ CAP_MB=1024                    # plafond disque total (volumes)
 QUOTA_MB=100                   # quota par compte
 TTL_HOURS=24                   # durée de vie d'un compte
 AUTO_UPDATE=1
+UNINSTALL=0
 TARBALL="${KUBUNO_REPO_TARBALL:-https://github.com/kubuno/docker/archive/refs/heads/main.tar.gz}"
 
 while [ $# -gt 0 ]; do
@@ -36,6 +40,7 @@ while [ $# -gt 0 ]; do
     --quota-mb) QUOTA_MB="$2"; shift 2;;
     --ttl-hours) TTL_HOURS="$2"; shift 2;;
     --no-auto-update) AUTO_UPDATE=0; shift;;
+    --uninstall) UNINSTALL=1; shift;;
     -h|--help) sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
     *) echo "Option inconnue: $1" >&2; exit 1;;
   esac
@@ -49,6 +54,30 @@ QUOTA_BYTES=$(( QUOTA_MB * 1024 * 1024 ))
 USER_HOME="/home/${DEMO_USER}"
 [ -n "$INSTALL_DIR" ] || INSTALL_DIR="${USER_HOME}/kubuno"
 DATA_IMG="/var/lib/${DEMO_USER}-data.img"
+
+# ── Désinstallation complète ─────────────────────────────────────────────────
+if [ "$UNINSTALL" = 1 ]; then
+  log "Désinstallation complète de la démo Kubuno…"
+  if id "$DEMO_USER" >/dev/null 2>&1; then
+    DUID="$(id -u "$DEMO_USER")"; RT="/run/user/${DUID}"; VOL_DIR="${USER_HOME}/.local/share/docker/volumes"
+    asu() { runuser -u "$DEMO_USER" -- env HOME="$USER_HOME" XDG_RUNTIME_DIR="$RT" \
+              DBUS_SESSION_BUS_ADDRESS="unix:path=$RT/bus" DOCKER_HOST="unix://$RT/docker.sock" \
+              PATH="$USER_HOME/bin:/usr/sbin:/usr/bin:/sbin:/bin" bash -c "$*"; }
+    systemctl start "user@${DUID}.service" 2>/dev/null || true
+    [ -x "$INSTALL_DIR/compose.sh" ] && asu "'$INSTALL_DIR/compose.sh' down -v --rmi all --remove-orphans" 2>/dev/null || true
+    asu "crontab -r" 2>/dev/null || true
+    asu "dockerd-rootless-setuptool.sh uninstall -f" 2>/dev/null || true
+    asu "systemctl --user stop docker" 2>/dev/null || true
+    mountpoint -q "$VOL_DIR" 2>/dev/null && umount "$VOL_DIR" 2>/dev/null || true
+    loginctl disable-linger "$DEMO_USER" 2>/dev/null || true
+    deluser --remove-home "$DEMO_USER" >/dev/null 2>&1 || userdel -r "$DEMO_USER" 2>/dev/null || true
+  fi
+  sed -i "\|${DATA_IMG}|d" /etc/fstab 2>/dev/null || true
+  rm -f "$DATA_IMG"
+  log "Désinstallé : conteneurs, volumes, images, cap disque, crons et utilisateur ${DEMO_USER} supprimés."
+  log "(Le moteur Docker système, si présent, n'est pas touché.)"
+  exit 0
+fi
 
 # ── 1. Paquets ───────────────────────────────────────────────────────────────
 log "Installation des prérequis…"
@@ -65,11 +94,15 @@ DEMO_UID="$(id -u "$DEMO_USER")"
 RT="/run/user/${DEMO_UID}"
 VOL_DIR="${USER_HOME}/.local/share/docker/volumes"
 
-# Exécute une commande en tant que l'utilisateur, avec l'environnement rootless.
+# Exécute une commande en tant que l'utilisateur, avec l'environnement rootless
+# (sans login-shell, pour ne pas écraser le PATH/env qu'on fournit).
 as_user() {
-  runuser -l "$DEMO_USER" -c \
-    "export XDG_RUNTIME_DIR='$RT' DOCKER_HOST='unix://$RT/docker.sock' \
-            DBUS_SESSION_BUS_ADDRESS='unix:path=$RT/bus' PATH=\"\$HOME/bin:\$PATH\"; $*"
+  runuser -u "$DEMO_USER" -- env \
+    HOME="$USER_HOME" XDG_RUNTIME_DIR="$RT" \
+    DBUS_SESSION_BUS_ADDRESS="unix:path=$RT/bus" \
+    DOCKER_HOST="unix://$RT/docker.sock" \
+    PATH="$USER_HOME/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+    bash -c "$*"
 }
 
 # ── 3. Loopback ext4 = cap disque TOTAL des volumes ──────────────────────────
@@ -79,21 +112,32 @@ if [ ! -f "$DATA_IMG" ]; then
   mkfs.ext4 -q "$DATA_IMG"
 fi
 
-# ── 4. Docker rootless (généré sous l'utilisateur) ───────────────────────────
+# ── 4. Session systemd utilisateur + Docker rootless ─────────────────────────
+# Prérequis rootless : plages subuid/subgid pour l'utilisateur.
+grep -q "^${DEMO_USER}:" /etc/subuid || echo "${DEMO_USER}:100000:65536" >> /etc/subuid
+grep -q "^${DEMO_USER}:" /etc/subgid || echo "${DEMO_USER}:100000:65536" >> /etc/subgid
+
+# Démarrer le gestionnaire systemd de l'utilisateur (crée /run/user/<uid> + bus DBus),
+# sinon `systemctl --user` échoue avec « Failed to connect to bus ».
+systemctl start "user@${DEMO_UID}.service" 2>/dev/null || true
+for _ in $(seq 1 30); do [ -S "$RT/bus" ] && break; sleep 1; done
+[ -S "$RT/bus" ] || err "Session systemd de $DEMO_USER indisponible ($RT/bus). Vérifie 'loginctl enable-linger $DEMO_USER'."
+
 log "Installation de Docker rootless…"
 as_user "command -v dockerd-rootless-setuptool.sh >/dev/null 2>&1 || curl -fsSL https://get.docker.com/rootless | sh"
-as_user "systemctl --user stop docker 2>/dev/null || true"
-as_user "mkdir -p '$VOL_DIR'"
+as_user "systemctl --user daemon-reload"
+as_user "systemctl --user enable --now docker"   # 1er démarrage → crée ~/.local/share/docker
 
-# Monter le loopback SUR le dossier des volumes rootless (volumes nommés → cap 1 Go).
+# Monter le loopback SUR le dossier des volumes rootless (volumes nommés → cap disque).
+as_user "systemctl --user stop docker"
+as_user "mkdir -p '$VOL_DIR'"
 if ! mountpoint -q "$VOL_DIR"; then
   log "Montage du cap disque sur $VOL_DIR"
   mount -o loop "$DATA_IMG" "$VOL_DIR"
 fi
 grep -q "$DATA_IMG" /etc/fstab || echo "$DATA_IMG $VOL_DIR ext4 loop,nofail 0 2" >> /etc/fstab
 chown -R "$DEMO_USER:$DEMO_USER" "$VOL_DIR"
-
-as_user "systemctl --user enable --now docker"
+as_user "systemctl --user start docker"
 as_user "docker version >/dev/null" || err "Docker rootless ne répond pas (voir 'journalctl --user -u docker' sous $DEMO_USER)."
 
 # ── 5. Fichiers de déploiement + .env ────────────────────────────────────────
