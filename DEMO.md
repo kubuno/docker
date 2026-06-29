@@ -14,6 +14,32 @@ défense en profondeur :
 
 ---
 
+## Installation automatisée (recommandé)
+
+Sur un VPS **dédié**, en root, une seule commande met tout en place :
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install-demo.sh | sudo bash
+# options : --port 8090 --cap-mb 1024 --quota-mb 100 --ttl-hours 24 --tag 0.1.2
+```
+
+`install-demo.sh` applique automatiquement les garanties :
+
+| Contrainte | Mécanisme |
+|---|---|
+| **≤ 1 Go disque (total)** | volumes posés sur un **loopback ext4** de `--cap-mb` Mo (plafond physique) |
+| **≤ 100 Mo / compte** | défaut `quota_bytes` fixé en base à `--quota-mb` Mo (appliqué au boot) |
+| **comptes supprimés après 24 h** | cron horaire `demo-cleanup.sh` → suppression via l'API admin (nettoyage des fichiers) |
+| isolation hôte | Docker **rootless** + `cap_drop`/`read-only`/limites + bind **loopback** |
+| à jour | **auto-update** quotidien (cron) ; relancer le script met aussi à jour |
+
+Il reste juste à **brancher ton nginx** devant `http://127.0.0.1:<port>` (§4).
+
+> Les sections ci-dessous décrivent les mêmes étapes **manuellement** (pour
+> comprendre/ajuster).
+
+---
+
 ## 1. Préparer l'hôte (en root, une fois)
 
 ```bash
