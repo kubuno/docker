@@ -22,7 +22,27 @@ The image aggregates ~21 component repositories (`kubuno/core`, `kubuno/drive`,
 `kubuno/calendar`, …). The build clones them on the fly, so this repository only
 holds the Docker tooling.
 
-## Quick start (from the published image)
+## One-line install (Linux server)
+
+Installs Docker if needed, fetches everything, generates secrets and starts Kubuno:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install.sh | sudo bash
+# → http://<server-ip>:8080   (default admin: admin / kubuno — change it!)
+```
+
+With automatic HTTPS (Let's Encrypt via Caddy), just pass a domain:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install.sh \
+  | sudo DOMAIN=cloud.example.com ACME_EMAIL=you@example.com bash
+# → https://cloud.example.com
+```
+
+Re-run the same command anytime to update (it re-pulls and restarts; secrets are kept).
+See [`install.sh`](install.sh) for all variables (`KUBUNO_TAG`, `KUBUNO_PORT`, `ADMIN_*`…).
+
+## Quick start (manual, from the published image)
 
 ```bash
 cp .env.docker.example .env     # fill in the secrets
