@@ -179,8 +179,8 @@ et `.env` (pas des sources) :
 
 ```bash
 cp .env.docker.example .env     # renseigner les secrets
-KUBUNO_TAG=0.1.0 docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-KUBUNO_TAG=0.1.0 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+KUBUNO_TAG=latest docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+KUBUNO_TAG=latest docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
 `docker-compose.prod.yml` remplace le `build` par `image: ghcr.io/kubuno/kubuno:<tag>`

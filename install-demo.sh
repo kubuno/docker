@@ -22,7 +22,7 @@ set -euo pipefail
 DEMO_USER="kubuno-demo"
 INSTALL_DIR=""                 # défaut: /home/<user>/kubuno
 KUBUNO_PORT=8090
-KUBUNO_TAG="0.1.2"
+KUBUNO_TAG="latest"           # toujours la dernière image publiée (épinglable via --tag)
 CAP_MB=1024                    # plafond disque total (volumes)
 QUOTA_MB=100                   # quota par compte
 TTL_HOURS=24                   # durée de vie d'un compte
