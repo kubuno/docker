@@ -20,7 +20,7 @@ Sur un VPS **dédié**, en root, une seule commande met tout en place :
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install-demo.sh | sudo bash
-# options : --port 8090 --cap-mb 1024 --quota-mb 100 --ttl-hours 24 --tag 0.1.2
+# options : --port 8090 --cap-mb 1024 --quota-mb 100 --ttl-hours 24 --tag latest
 ```
 
 `install-demo.sh` applique automatiquement les garanties :
@@ -85,7 +85,7 @@ POSTGRES_PASSWORD=$(openssl rand -hex 16)
 POSTGRES_DB=kubuno
 KUBUNO_JWT_SECRET=$(openssl rand -base64 48)
 KUBUNO_INTERNAL_SECRET=$(openssl rand -hex 32)
-KUBUNO_TAG=0.1.2
+KUBUNO_TAG=latest
 KUBUNO_PORT=8090
 EOF
 
