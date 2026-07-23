@@ -42,14 +42,20 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           df -h /
 
-      - name: Cloner le core + les modules (dépôts publics)
+      - name: Cloner le core + les modules aux tags épinglés (VERSIONS)
         run: |
           set -e
+          # Every component is cloned at the tag pinned in VERSIONS — never at
+          # main — so a given image tag is reproducible. Regenerate the manifest
+          # with _tools/gen_docker_versions.sh in the workspace.
+          [ -f VERSIONS ] || { echo "::error::VERSIONS manquant (gen_docker_versions.sh)"; exit 1; }
           MODS="${{ github.event.inputs.modules }}"
           [ -z "$MODS" ] && MODS="${ALL_MODULES}"
           for m in core $MODS; do
-            echo "::group::clone $m"
-            git clone --depth 1 "https://github.com/kubuno/$m.git" "$m"
+            tag="$(grep "^$m=" VERSIONS | cut -d= -f2)"
+            [ -n "$tag" ] || { echo "::error::$m absent de VERSIONS"; exit 1; }
+            echo "::group::clone $m @ $tag"
+            git clone --depth 1 --branch "$tag" "https://github.com/kubuno/$m.git" "$m"
             echo "::endgroup::"
           done
 

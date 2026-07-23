@@ -50,6 +50,10 @@ RUN apt-get update \
 # Rootfs assemblé par le builder (binaires + frontends + configs).
 COPY --from=builder /out/ /
 
+# Pin manifest baked into the image: which tag of each component this image
+# contains (runtime traceability: `cat /etc/kubuno/VERSIONS`).
+COPY VERSIONS /etc/kubuno/VERSIONS
+
 # Répertoires runtime : données host + un dossier data/temp/config par module.
 RUN set -eux; \
     mkdir -p /var/lib/kubuno/files /var/lib/kubuno/themes /var/log/kubuno; \
