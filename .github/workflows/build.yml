@@ -25,7 +25,7 @@ on:
 
 env:
   IMAGE: ghcr.io/kubuno/kubuno
-  ALL_MODULES: "app books calendar chat code contacts drive flow forms forum jarvis keestore mail maps media notes office paintsharp photos tasks wiki"
+  ALL_MODULES: "app books calendar chat code contacts drive flow forms forum assistant keestore mail maps media notes office paintsharp photos tasks wiki"
 
 jobs:
   build:

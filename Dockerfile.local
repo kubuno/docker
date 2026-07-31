@@ -20,7 +20,7 @@
 #   3. Lancer :
 #        docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 # ─────────────────────────────────────────────────────────────────────────────
-ARG MODULES="app books calendar chat code contacts drive flow forms forum jarvis keestore mail maps media notes office paintsharp photos tasks wiki"
+ARG MODULES="app books calendar chat code contacts drive flow forms forum assistant keestore mail maps media notes office paintsharp photos tasks wiki"
 ARG RUNTIME_BASE=debian:bookworm-slim
 FROM ${RUNTIME_BASE}
 ARG MODULES

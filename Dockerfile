@@ -19,7 +19,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Liste par défaut = tous les modules (ARG global, partagé par les deux stages).
-ARG MODULES="app books calendar chat code contacts drive flow forms forum jarvis keestore mail maps media notes office paintsharp photos tasks wiki"
+ARG MODULES="app books calendar chat code contacts drive flow forms forum assistant keestore mail maps media notes office paintsharp photos tasks wiki"
 
 # ── Stage 1 : compilation (Rust + Node) ──────────────────────────────────────
 # buildpack-deps (base de l'image rust) fournit déjà git, curl, pkg-config et
