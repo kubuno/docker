@@ -28,3 +28,8 @@ _artifacts/
 **/target/
 **/node_modules/
 **/dist/
+
+# Claude Code working files (agent instructions & memory) — never published
+CLAUDE.md
+AGENTS.md
+.claude/
