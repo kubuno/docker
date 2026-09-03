@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/logo.svg" alt="Kubuno Docker logo" width="128" height="128">
+</p>
+
 # kubuno/docker
 
 Docker packaging for **[Kubuno](https://github.com/kubuno)** — the self-hosted,
