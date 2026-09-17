@@ -19,7 +19,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Liste par défaut = tous les modules (ARG global, partagé par les deux stages).
-ARG MODULES="app books calendar chat code contacts drive flow forms forum assistant keestore mail maps media notes office paintsharp photos tasks wiki"
+ARG MODULES="app books calendar chat code contacts drive flow forms forum assistant keestore mail maps media notes office paintsharp photos tasks wiki stt"
 
 # ── Stage 1 : compilation (Rust + Node) ──────────────────────────────────────
 # buildpack-deps (base de l'image rust) fournit déjà git, curl, pkg-config et
@@ -28,8 +28,9 @@ FROM rust:1-bookworm AS builder
 ARG MODULES
 
 # Node 22 (Vite 8 / rolldown exige Node >= 20.19).
+# cmake : le module stt compile whisper.cpp depuis les sources (whisper-rs-sys).
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
+    && apt-get install -y --no-install-recommends nodejs cmake \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
@@ -41,9 +42,10 @@ RUN MODULES="${MODULES}" SRC=/build OUT=/out CLEAN=1 bash _tools/docker/build.sh
 FROM debian:bookworm-slim AS runtime
 ARG MODULES
 
-# libssl3 : reqwest/native-tls · curl : healthcheck · ffmpeg : transcodage media.
+# libssl3 : reqwest/native-tls · curl : healthcheck · ffmpeg : transcodage media
+# · libgomp1 : OpenMP requis à l'exécution par whisper.cpp (module stt).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates libssl3 curl ffmpeg \
+    && apt-get install -y --no-install-recommends ca-certificates libssl3 curl ffmpeg libgomp1 \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --system --no-create-home --shell /usr/sbin/nologin kubuno
 

@@ -1,13 +1,13 @@
 # Component → git tag pinned into the all-in-one image.
 # Regenerate with: bash _tools/gen_docker_versions.sh  (never edit by hand)
-core=v0.1.6
+core=v0.1.10
 app=v0.1.6
 books=v0.1.6
 calendar=v0.1.6
 chat=v0.1.6
 code=v0.1.6
 contacts=v0.1.6
-drive=v0.1.6
+drive=v0.1.9
 flow=v0.1.6
 forms=v0.1.6
 forum=v0.1.6
@@ -22,3 +22,4 @@ paintsharp=v0.1.6
 photos=v0.1.6
 tasks=v0.1.6
 wiki=v0.1.6
+stt=v0.1.0
