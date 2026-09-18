@@ -9,6 +9,15 @@ and this repository follows [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The image builds with the speech-to-text module in it.** Adding that module
+  to the image surfaced a build dependency the image lacked: the module
+  generates its bindings with a tool that loads `libclang` at build time, which
+  the hosted runners provide but this image did not. The failure could only ever
+  appear here, never in the module's own build.
+
+
+### Fixed
+
 - **The published image now really contains every module it advertises.** The
   all-in-one image built and pushed for a release was missing `stt`: it shipped
   21 modules while the manifest and the Dockerfile both announced 22. The module

@@ -31,9 +31,12 @@ FROM rust:1-bookworm AS builder
 ARG MODULES
 
 # Node 22 (Vite 8 / rolldown exige Node >= 20.19).
-# cmake : le module stt compile whisper.cpp depuis les sources (whisper-rs-sys).
+# cmake  : le module stt compile whisper.cpp depuis les sources (whisper-rs-sys).
+# clang  : whisper-rs-sys génère ses liaisons avec bindgen, qui charge libclang
+#          à l'exécution du script de build. Les runners GitHub l'ont d'office,
+#          cette image non — d'où un échec qui n'apparaissait QUE dans l'image.
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs cmake \
+    && apt-get install -y --no-install-recommends nodejs cmake clang libclang-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
