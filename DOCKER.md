@@ -78,15 +78,25 @@ curl http://localhost:8080/api/v1/modules   # doit lister "drive"
 
 ### Premier accès
 
-Au premier démarrage, le core crée automatiquement un compte administrateur :
+Au premier démarrage, le core crée un compte administrateur. **Il n'existe aucun
+mot de passe par défaut** : un mot de passe présent dans la documentation serait
+connu de quiconque atteint le port avant vous.
 
-| Identifiant (`login`) | Mot de passe | Email                |
-|-----------------------|--------------|----------------------|
-| `admin`               | `kubuno`     | `admin@kubuno.local` |
+| Identifiant (`login`) | Mot de passe                                    | Email                |
+|-----------------------|-------------------------------------------------|----------------------|
+| `admin`               | engendré au hasard, ou celui que vous fournissez | `admin@kubuno.local` |
 
-Ouvrez **http://localhost:8080**, connectez-vous avec ces identifiants, puis
-**changez immédiatement le mot de passe** (Réglages → Sécurité) — ils sont
-identiques sur toute instance fraîche.
+Faute de `KUBUNO_ADMIN_PASSWORD`, le core tire un mot de passe de 20 caractères
+et le dépose dans **`/var/lib/kubuno/initial-admin-password`** (droits `0600`,
+lisible du seul compte de service). Il n'est **jamais écrit dans les journaux** :
+ceux-ci n'indiquent que le chemin du fichier. Pour le lire :
+
+```bash
+docker compose exec kubuno cat /var/lib/kubuno/initial-admin-password
+```
+
+Ouvrez **http://localhost:8080**, connectez-vous, et le changement de mot de
+passe vous est **imposé avant toute autre action**.
 
 Pour fixer d'autres identifiants **dès le premier démarrage**, renseignez (avant
 le `up` initial) dans `.env` :

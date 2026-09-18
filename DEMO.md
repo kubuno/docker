@@ -129,7 +129,7 @@ inaccessible de l'extérieur même sans règle dédiée.
 
 - **Quotas** : dans la console admin, baisse le quota par défaut (ex. 200 Mo) et la
   taille max d'upload.
-- **Admin** : change le mot de passe `admin` / `kubuno` (ou fixe-le au 1er boot via
+- **Admin** : l'identifiant public de la démo est `admin` / `kubuno`, **fixé explicitement** par `install-demo.sh` (`KUBUNO_ADMIN_PASSWORD`). Le produit n'a plus de mot de passe par défaut : ailleurs, il est choisi dans l'assistant d'installation ou engendré au hasard. Pour le changer ici (ou le fixer au 1er boot via
   `KUBUNO_ADMIN_PASSWORD=…` dans `.env`).
 - **Reset périodique** (repartir propre chaque nuit) — cron de `kubuno-demo` :
   ```bash

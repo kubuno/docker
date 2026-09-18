@@ -22,6 +22,11 @@ set -euo pipefail
 DEMO_USER="kubuno-demo"
 INSTALL_DIR=""                 # défaut: /home/<user>/kubuno
 KUBUNO_PORT=8090
+# Cette instance est une VITRINE PUBLIQUE : son mot de passe est volontairement
+# connu, et c'est pourquoi il est DÉCLARÉ ici plutôt qu'hérité. Le produit, lui,
+# n'a plus aucun mot de passe par défaut : ailleurs il est choisi dans l'assistant
+# d'installation, ou engendré au hasard.
+DEMO_ADMIN_PASSWORD="kubuno"
 KUBUNO_TAG="latest"           # toujours la dernière image publiée (épinglable via --tag)
 CAP_MB=1024                    # plafond disque total (volumes)
 QUOTA_MB=100                   # quota par compte
@@ -157,6 +162,7 @@ if ! as_user "test -f '$INSTALL_DIR/.env'"; then
     echo KUBUNO_INTERNAL_SECRET=\$(openssl rand -hex 32); \
     echo KUBUNO_TAG=$KUBUNO_TAG; \
     echo KUBUNO_PORT=$KUBUNO_PORT; \
+    echo KUBUNO_ADMIN_PASSWORD=$DEMO_ADMIN_PASSWORD; \
   } > '$INSTALL_DIR/.env'"
 else
   log ".env existant conservé (mise à jour du tag → $KUBUNO_TAG)"
@@ -198,7 +204,7 @@ as_user "( crontab -l 2>/dev/null | grep -v 'demo-cleanup.sh' | grep -v 'compose
 echo
 log "Démo Kubuno installée 🎉"
 echo "  Accès interne : http://127.0.0.1:${KUBUNO_PORT}   → expose-le via ton nginx (proxy_pass + TLS, cf. DEMO.md)"
-echo "  Admin         : admin / kubuno  (à changer)"
+echo "  Admin         : admin / $DEMO_ADMIN_PASSWORD  (identifiant public de la démo)"
 echo "  Utilisateur   : ${DEMO_USER} (Docker rootless)   Dossier : ${INSTALL_DIR}"
 echo "  Cap disque    : ${CAP_MB} Mo total · ${QUOTA_MB} Mo/compte · comptes supprimés après ${TTL_HOURS}h"
 echo "  Gérer         : sudo -iu ${DEMO_USER}  puis  ${INSTALL_DIR}/compose.sh ps|logs|down"

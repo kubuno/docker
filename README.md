@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/logo.svg" alt="Kubuno Docker logo" width="128" height="128">
+  <img src=".github/logo.png" alt="Kubuno Docker logo" width="120">
 </p>
 
 # kubuno/docker
@@ -32,7 +32,8 @@ Installs Docker if needed, fetches everything, generates secrets and starts Kubu
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install.sh | sudo bash
-# → http://<server-ip>:8080   (default admin: admin / kubuno — change it!)
+# → http://<server-ip>:8080
+#   The installer prints the admin password it generated — there is no default one.
 ```
 
 Pass options after `bash -s --` (reliable through `curl | bash`). Custom port:
@@ -59,7 +60,9 @@ Options: `--port`, `--domain`, `--email`, `--tag`, `--dir`, `--admin-user/-passw
 cp .env.docker.example .env     # fill in the secrets
 KUBUNO_TAG=latest docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
 KUBUNO_TAG=latest docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-# → http://localhost:8080   (default admin: admin / kubuno — change it!)
+# → http://localhost:8080
+#   Set KUBUNO_ADMIN_PASSWORD, or read the generated one from the container log's
+#   pointer file (/var/lib/kubuno/initial-admin-password). There is no default.
 ```
 
 ## Build it yourself

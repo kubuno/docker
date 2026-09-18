@@ -20,7 +20,7 @@
 #   --tag <t>             tag d'image                (défaut latest ; ex 0.1.2)
 #   --dir <path>          répertoire d'install       (défaut /opt/kubuno)
 #   --admin-user <u>      identifiant admin initial  (défaut admin)
-#   --admin-password <p>  mot de passe admin initial (défaut kubuno)
+#   --admin-password <p>  mot de passe admin initial (par défaut : engendré au hasard)
 #   --admin-email <e>     e-mail admin initial
 #   --no-auto-update      ne pas installer le cron de mise à jour quotidienne
 #   --uninstall           désinstalle tout (conteneurs + volumes + images + cron + dossier)
@@ -121,6 +121,11 @@ cd "$INSTALL_DIR"
 # ── 3. .env (créé une fois ; secrets préservés ensuite) ───────────────────────
 if [ ! -f .env ]; then
   log "Génération de .env (secrets aléatoires)"
+  # Aucun mot de passe administrateur par défaut : un mot de passe présent dans
+  # le script serait connu de quiconque le lit. Faute d'un choix explicite, on en
+  # engendre un, et il n'apparaît que dans le .env (0600) et dans le récapitulatif
+  # affiché ici même, à l'opérateur qui lance l'installation.
+  [ -z "$ADMIN_PASSWORD" ] && ADMIN_PASSWORD="$(rand -hex 12)" && ADMIN_PASSWORD_GENERATED=1
   {
     echo "POSTGRES_USER=kubuno"
     echo "POSTGRES_PASSWORD=$(rand -hex 16)"
@@ -131,12 +136,13 @@ if [ ! -f .env ]; then
     echo "KUBUNO_PORT=$(port_bind)"
     [ -n "$DOMAIN" ]         && echo "DOMAIN=${DOMAIN}"
     [ -n "$ADMIN_USER" ]     && echo "KUBUNO_ADMIN_USER=${ADMIN_USER}"
-    [ -n "$ADMIN_PASSWORD" ] && echo "KUBUNO_ADMIN_PASSWORD=${ADMIN_PASSWORD}"
+    echo "KUBUNO_ADMIN_PASSWORD=${ADMIN_PASSWORD}"
     [ -n "$ADMIN_EMAIL" ]    && echo "KUBUNO_ADMIN_EMAIL=${ADMIN_EMAIL}"
   } | $SUDO tee .env >/dev/null
   $SUDO chmod 600 .env
 else
   log ".env existant conservé (secrets inchangés)"
+  ENV_KEPT=1
 fi
 
 # Mises à jour idempotentes : appliquer les options explicitement passées.
@@ -208,7 +214,12 @@ else
   IP="$(hostname -I 2>/dev/null | awk '{print $1}')"; [ -z "$IP" ] && IP="<ip-serveur>"
   echo "  URL     : http://${IP}:${EFF_PORT}"
 fi
-echo "  Admin   : ${ADMIN_USER:-admin} / ${ADMIN_PASSWORD:-kubuno}   (à changer dès la 1re connexion)"
+if [ "${ENV_KEPT:-0}" = 1 ]; then
+  echo "  Admin   : ${ADMIN_USER:-admin}   (mot de passe inchangé — voir ${INSTALL_DIR}/.env)"
+else
+  echo "  Admin   : ${ADMIN_USER:-admin} / ${ADMIN_PASSWORD}   (à changer dès la 1re connexion)"
+  [ "${ADMIN_PASSWORD_GENERATED:-0}" = 1 ] && echo "            ↑ engendré au hasard : notez-le, il n'est pas affiché ailleurs"
+fi
 echo "  Dossier : ${INSTALL_DIR}   (config : ${INSTALL_DIR}/.env)"
 echo "  Logs    : ${INSTALL_DIR}/compose.sh logs -f"
 echo "  Arrêt   : ${INSTALL_DIR}/compose.sh down"
