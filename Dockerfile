@@ -19,6 +19,9 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Liste par défaut = tous les modules (ARG global, partagé par les deux stages).
+# ATTENTION : ce défaut ne sert qu'aux `docker build` manuels. La CI passe
+# toujours --build-arg MODULES=..., dérivé de VERSIONS, et écrase cette ligne.
+# Ne jamais conclure du contenu de l'image à partir de cette liste.
 ARG MODULES="app books calendar chat code contacts drive flow forms forum assistant keestore mail maps media notes office paintsharp photos tasks wiki stt"
 
 # ── Stage 1 : compilation (Rust + Node) ──────────────────────────────────────
