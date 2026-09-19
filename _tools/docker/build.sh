@@ -59,11 +59,18 @@ for m in $MODULES; do
   echo "==> module $m"
   cd "$SRC/$m"
   cargo build --release --bin "kubuno-$m"
-  build_frontend "$SRC/$m/frontend"
   install -D -m755 "target/release/kubuno-$m" "$OUT/usr/lib/kubuno/modules/$m/kubuno-$m"
   install -D -m644 module.toml                 "$OUT/usr/lib/kubuno/modules/$m/module.toml"
-  mkdir -p "$OUT/usr/lib/kubuno/modules/$m/frontend"
-  cp -r frontend/dist/. "$OUT/usr/lib/kubuno/modules/$m/frontend/"
+  # Tous les modules n'ont pas d'interface : stt est sans écran, et le script
+  # échouait sur un `cd` vers un dossier frontend inexistant. Un module sans
+  # interface est légitime, pas une erreur.
+  if [ -d "$SRC/$m/frontend" ]; then
+    build_frontend "$SRC/$m/frontend"
+    mkdir -p "$OUT/usr/lib/kubuno/modules/$m/frontend"
+    cp -r frontend/dist/. "$OUT/usr/lib/kubuno/modules/$m/frontend/"
+  else
+    echo "    (pas d'interface)"
+  fi
   # config.toml du module (rôle du postinst .deb) : fixe ses chemins de stockage.
   # URL core / secret / DB restent surchargés par le superviseur (KUBUNO_*).
   [ -f config.toml.example ] && install -D -m644 config.toml.example "$OUT/etc/kubuno/modules/$m/config.toml"

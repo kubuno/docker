@@ -14,6 +14,10 @@ and this repository follows [Semantic Versioning](https://semver.org/spec/v2.0.0
   generates its bindings with a tool that loads `libclang` at build time, which
   the hosted runners provide but this image did not. The failure could only ever
   appear here, never in the module's own build.
+- **A module without a user interface no longer breaks the image.** The
+  assembly script assumed every module ships one and stopped on the first
+  that does not. Speech-to-text has no screen, which is legitimate, so the
+  interface step is now skipped for such a module instead of failing.
 
 
 ### Fixed
