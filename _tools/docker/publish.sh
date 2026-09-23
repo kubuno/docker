@@ -2,8 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # publish.sh — construit l'image Kubuno tout-en-un et la pousse vers un registre.
 #
-# ⚠️ Le `docker push` est une action SORTANTE → à lancer par l'UTILISATEUR
-#    (préfixe `!` dans Claude), jamais par l'agent.
+# The `docker push` is an outbound action: it is run by the maintainer, by hand.
 #
 # Pré-requis : être authentifié au registre, p.ex. GHCR :
 #    echo "$GHCR_TOKEN" | docker login ghcr.io -u kubuno-dev --password-stdin
