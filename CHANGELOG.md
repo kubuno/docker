@@ -9,6 +9,11 @@ and this repository follows [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Identical files on every OS.** The repository now pins line endings to LF
+  (`.gitattributes`), so a checkout on Windows no longer turns scripts,
+  manifests or sources into CRLF, and what is built or packaged from it is the
+  same whichever OS checks it out.
+
 - **The image builds with the speech-to-text module in it.** Adding that module
   to the image surfaced a build dependency the image lacked: the module
   generates its bindings with a tool that loads `libclang` at build time, which
