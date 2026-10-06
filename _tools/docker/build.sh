@@ -32,6 +32,16 @@ export CARGO_NET_RETRY="${CARGO_NET_RETRY:-10}"
 export CARGO_HTTP_MULTIPLEXING="${CARGO_HTTP_MULTIPLEXING:-false}"
 export CARGO_NET_GIT_FETCH_WITH_CLI="${CARGO_NET_GIT_FETCH_WITH_CLI:-true}"
 
+# Repository layouts (both accepted while the repositories move, 2026-10): the platform layout has the
+# server in server/ (Cargo.toml, src/, migrations/, config.toml.example) and the frontend in web/; the older
+# one has them at the root and in frontend/. module.toml stays at the root in both.
+server_dir() {  # $1 = repository → its server folder
+  if [ -f "$1/server/Cargo.toml" ]; then echo "$1/server"; else echo "$1"; fi
+}
+web_dir() {  # $1 = repository → its frontend folder (may not exist: a module without UI)
+  if [ -f "$1/web/package.json" ]; then echo "$1/web"; else echo "$1/frontend"; fi
+}
+
 build_frontend() {  # $1 = répertoire frontend
   ( cd "$1" && { [ -f package-lock.json ] && npm ci || npm install; } && npm run build )
   # node_modules est volumineux et inutile une fois dist/ produit
@@ -44,37 +54,39 @@ maybe_clean() {  # $1 = répertoire cargo
 
 # ── core ─────────────────────────────────────────────────────────────────────
 echo "==> core"
-cd "$SRC/core"
+S="$(server_dir "$SRC/core")"; W="$(web_dir "$SRC/core")"
+cd "$S"
 cargo build --release --bin kubuno-core --bin kubuno
-build_frontend "$SRC/core/frontend"
+build_frontend "$W"
 install -D -m755 target/release/kubuno-core "$OUT/usr/bin/kubuno-core"
 install -D -m755 target/release/kubuno      "$OUT/usr/bin/kubuno"
 mkdir -p "$OUT/usr/share/kubuno/frontend"
-cp -r frontend/dist/. "$OUT/usr/share/kubuno/frontend/"
+cp -r "$W/dist/." "$OUT/usr/share/kubuno/frontend/"
 install -D -m644 config.toml.example "$OUT/etc/kubuno/config.toml.example"
-maybe_clean "$SRC/core"
+maybe_clean "$S"
 
 # ── modules ──────────────────────────────────────────────────────────────────
 for m in $MODULES; do
   echo "==> module $m"
-  cd "$SRC/$m"
+  S="$(server_dir "$SRC/$m")"; W="$(web_dir "$SRC/$m")"
+  cd "$S"
   cargo build --release --bin "kubuno-$m"
   install -D -m755 "target/release/kubuno-$m" "$OUT/usr/lib/kubuno/modules/$m/kubuno-$m"
-  install -D -m644 module.toml                 "$OUT/usr/lib/kubuno/modules/$m/module.toml"
+  install -D -m644 "$SRC/$m/module.toml"       "$OUT/usr/lib/kubuno/modules/$m/module.toml"
   # Tous les modules n'ont pas d'interface : stt est sans écran, et le script
   # échouait sur un `cd` vers un dossier frontend inexistant. Un module sans
   # interface est légitime, pas une erreur.
-  if [ -d "$SRC/$m/frontend" ]; then
-    build_frontend "$SRC/$m/frontend"
+  if [ -d "$W" ]; then
+    build_frontend "$W"
     mkdir -p "$OUT/usr/lib/kubuno/modules/$m/frontend"
-    cp -r frontend/dist/. "$OUT/usr/lib/kubuno/modules/$m/frontend/"
+    cp -r "$W/dist/." "$OUT/usr/lib/kubuno/modules/$m/frontend/"
   else
     echo "    (pas d'interface)"
   fi
   # config.toml du module (rôle du postinst .deb) : fixe ses chemins de stockage.
   # URL core / secret / DB restent surchargés par le superviseur (KUBUNO_*).
   [ -f config.toml.example ] && install -D -m644 config.toml.example "$OUT/etc/kubuno/modules/$m/config.toml"
-  maybe_clean "$SRC/$m"
+  maybe_clean "$S"
 done
 
 echo "==> build terminé → $OUT"

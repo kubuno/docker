@@ -7,6 +7,12 @@ and this repository follows [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The image builds components in either repository layout.** A component organised by platform (its server in
+  `server/`, its web frontend in `web/`, as drive is since October 2026) is built from those folders; the others
+  keep building from their root and `frontend/`. The installed layout in the image does not change.
+
 ### Fixed
 
 - **Identical files on every OS.** The repository now pins line endings to LF
