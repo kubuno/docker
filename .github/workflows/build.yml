@@ -62,8 +62,8 @@ jobs:
       - name: Cloner le core + les modules aux tags épinglés (VERSIONS)
         run: |
           set -e
-          # Every component is cloned at the tag pinned in VERSIONS — never at
-          # main — so a given image tag is reproducible. Regenerate the manifest
+          # Every component is cloned at the tag pinned in VERSIONS - never at
+          # main - so a given image tag is reproducible. Regenerate the manifest
           # with _tools/gen_docker_versions.sh in the workspace.
           for m in core $MODULES; do
             tag="$(grep "^$m=" VERSIONS | cut -d= -f2)"

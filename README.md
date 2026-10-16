@@ -7,14 +7,14 @@
 
 <img src=".github/logo.png" alt="Kubuno logo" width="120">
 
-# Kubuno — Docker
+# Kubuno - Docker
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://github.com/kubuno/core/blob/main/LICENSE)
 ![Docker](https://img.shields.io/badge/Docker-all--in--one-2496ED.svg)
 ![Registry](https://img.shields.io/badge/ghcr.io-kubuno%2Fkubuno-4D38DB.svg)
 ![Status](https://img.shields.io/badge/status-alpha-yellow.svg)
 
-**The all-in-one Docker image of [Kubuno](https://github.com/kubuno) — the self-hosted, libre (AGPLv3) cloud platform, a sovereign alternative to Google Workspace and Microsoft 365.**
+**The all-in-one Docker image of [Kubuno](https://github.com/kubuno) - the self-hosted, libre (AGPLv3) cloud platform, a sovereign alternative to Google Workspace and Microsoft 365.**
 
 One image with the core and every module, published to the GitHub Container Registry.
 
@@ -33,12 +33,12 @@ The Kubuno core is a **supervisor**: on startup it scans its module directory
 (`/usr/lib/kubuno/modules/` in the image), launches each module binary as a child
 process and injects its configuration (core URL, internal secret, database
 credentials). The image therefore reproduces the native install layout and runs
-`kubuno-core` — the supervisor starts the modules on its own. One image, one root
+`kubuno-core` - the supervisor starts the modules on its own. One image, one root
 process, configuration entirely through environment variables.
 
 The image aggregates the **core and 22 modules** (`kubuno/core`, `kubuno/drive`,
 `kubuno/calendar`, …, `kubuno/stt`). Each component is built from the **git tag
-pinned in [`VERSIONS`](VERSIONS)** — never from a moving branch — and the manifest is
+pinned in [`VERSIONS`](VERSIONS)** - never from a moving branch - and the manifest is
 copied into the image (`cat /etc/kubuno/VERSIONS`), so a running container always
 says exactly which version of every component it contains.
 
@@ -49,7 +49,7 @@ Installs Docker if needed, fetches everything, generates the secrets and starts 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install.sh | sudo bash
 # → http://<server-ip>:8080
-#   The installer prints the administrator password it generated — there is no default one.
+#   The installer prints the administrator password it generated - there is no default one.
 ```
 
 Pass options after `bash -s --` (reliable through `curl | bash`). Custom port:
@@ -58,7 +58,7 @@ Pass options after `bash -s --` (reliable through `curl | bash`). Custom port:
 curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install.sh | sudo bash -s -- --port 9000
 ```
 
-Automatic HTTPS (Let's Encrypt via Caddy) — just give a domain (ports 80/443 must be open, DNS pointing to the server):
+Automatic HTTPS (Let's Encrypt via Caddy) - just give a domain (ports 80/443 must be open, DNS pointing to the server):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kubuno/docker/main/install.sh \
@@ -136,7 +136,7 @@ git push origin v0.1.0
 
 ## Security
 
-Please report vulnerabilities privately — see [`SECURITY.md`](SECURITY.md).
+Please report vulnerabilities privately - see [`SECURITY.md`](SECURITY.md).
 
 ## License
 

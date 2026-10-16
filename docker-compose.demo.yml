@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Surcouche DURCISSEMENT pour une DÉMO publique — isolation maximale de l'hôte.
+# Surcouche DURCISSEMENT pour une DÉMO publique - isolation maximale de l'hôte.
 #
 # À combiner avec la base + l'image publiée :
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.demo.yml up -d

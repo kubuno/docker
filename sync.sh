@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sync.sh — recopie l'outillage Docker depuis un workspace Kubuno voisin vers ce
+# sync.sh - recopie l'outillage Docker depuis un workspace Kubuno voisin vers ce
 # dépôt (source de vérité = la racine du workspace où vivent les dépôts côte à côte).
 # Utile tant que les fichiers sont édités dans le workspace ; à terme, ce dépôt
 # peut devenir l'unique source.

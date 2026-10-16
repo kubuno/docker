@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# publish.sh — construit l'image Kubuno tout-en-un et la pousse vers un registre.
+# publish.sh - construit l'image Kubuno tout-en-un et la pousse vers un registre.
 #
 # The `docker push` is an outbound action: it is run by the maintainer, by hand.
 #

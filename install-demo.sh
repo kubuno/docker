@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# Kubuno — installateur de DÉMO durcie (à lancer en ROOT sur un VPS dédié).
+# Kubuno - installateur de DÉMO durcie (à lancer en ROOT sur un VPS dédié).
 #
 # Met en place une démo isolée au maximum :
 #   • Docker ROOTLESS sous un utilisateur dédié non-privilégié
@@ -191,7 +191,7 @@ as_user "'$INSTALL_DIR/compose.sh' exec -T db psql -U kubuno -d kubuno -v ON_ERR
   \"ALTER TABLE core.users ALTER COLUMN quota_bytes SET DEFAULT $QUOTA_BYTES; \
     UPDATE core.users SET quota_bytes=$QUOTA_BYTES WHERE role <> 'admin'; \
     UPDATE core.settings SET value='$QUOTA_BYTES' WHERE key='storage.default_quota_bytes';\"" \
-  || log "⚠ quota non appliqué (la base n'était peut-être pas prête) — relance le script."
+  || log "⚠ quota non appliqué (la base n'était peut-être pas prête) - relance le script."
 
 # ── 9. Crons : purge TTL + auto-update ───────────────────────────────────────
 CRON_CLEAN="17 * * * * TTL_HOURS=$TTL_HOURS KUBUNO_BASE=http://127.0.0.1:$KUBUNO_PORT bash $INSTALL_DIR/demo-cleanup.sh >> \$HOME/demo-cleanup.log 2>&1"

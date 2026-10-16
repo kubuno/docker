@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # ─────────────────────────────────────────────────────────────────────────────
-# Kubuno — image runtime « pré-buildée ».
+# Kubuno - image runtime « pré-buildée ».
 #
 # N'embarque PAS de compilateur : empaquète un rootfs (binaires + frontends +
 # configs) DÉJÀ assemblé sur l'HÔTE par _tools/docker/build.sh. À privilégier
@@ -8,7 +8,7 @@
 # compilation complète, ou pour itérer vite.
 #
 #   1. Assembler le rootfs sur l'hôte (compile core + modules ; CLEAN=1 borne le
-#      pic disque mais EFFACE les caches cargo des dépôts — mettre CLEAN=0 pour
+#      pic disque mais EFFACE les caches cargo des dépôts - mettre CLEAN=0 pour
 #      les conserver si vous avez la place) :
 #        MODULES="drive calendar notes" \
 #        SRC="$PWD" OUT="$PWD/_artifacts/docker-rootfs" CLEAN=1 \

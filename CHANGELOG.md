@@ -36,8 +36,8 @@ and this repository follows [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The published image now really contains every module it advertises.** The
   all-in-one image built and pushed for a release was missing `stt`: it shipped
   21 modules while the manifest and the Dockerfile both announced 22. The module
-  list existed in three places, and the one the build actually used — a copy
-  hardcoded in the release workflow — had not been updated. The workflow now
+  list existed in three places, and the one the build actually used - a copy
+  hardcoded in the release workflow - had not been updated. The workflow now
   derives the list from `VERSIONS`, the manifest that already records which tag
   of each component the image contains, so a component pinned there can no
   longer be left out of the image that claims to ship it.
@@ -53,7 +53,7 @@ and this repository follows [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - **The Compose deployment no longer ships a default administrator password.**
-  `KUBUNO_ADMIN_PASSWORD` fell back to `kubuno` when unset — a password written
+  `KUBUNO_ADMIN_PASSWORD` fell back to `kubuno` when unset - a password written
   in a public repository, and therefore known to anyone who could reach the port
   before the owner did. It also quietly cancelled the server's own rule: given no
   password, the server draws a random one, writes it to

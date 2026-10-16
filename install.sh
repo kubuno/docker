@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# Kubuno — installateur tout-en-un pour un serveur Linux (Docker).
+# Kubuno - installateur tout-en-un pour un serveur Linux (Docker).
 #
 # Installe Docker au besoin, récupère les fichiers de déploiement, génère les
 # secrets, tire l'image publique ghcr.io/kubuno/kubuno et démarre la stack.
@@ -24,7 +24,7 @@
 #   --admin-email <e>     e-mail admin initial
 #   --no-auto-update      ne pas installer le cron de mise à jour quotidienne
 #   --uninstall           désinstalle tout (conteneurs + volumes + images + cron + dossier)
-# (Les variables d'environnement de mêmes noms — KUBUNO_PORT, DOMAIN, … — restent
+# (Les variables d'environnement de mêmes noms - KUBUNO_PORT, DOMAIN, … - restent
 #  acceptées en repli.)
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
@@ -199,7 +199,7 @@ WRAP
 $SUDO chmod +x "$INSTALL_DIR/compose.sh"
 
 if [ "$AUTO_UPDATE" = 1 ]; then
-  log "Auto-update quotidien (cron) — re-pull + restart si l'image a changé"
+  log "Auto-update quotidien (cron) - re-pull + restart si l'image a changé"
   printf '30 4 * * * root %s/compose.sh pull -q && %s/compose.sh up -d --remove-orphans >> /var/log/kubuno-update.log 2>&1\n' \
     "$INSTALL_DIR" "$INSTALL_DIR" | $SUDO tee /etc/cron.d/kubuno-update >/dev/null
 fi
@@ -215,7 +215,7 @@ else
   echo "  URL     : http://${IP}:${EFF_PORT}"
 fi
 if [ "${ENV_KEPT:-0}" = 1 ]; then
-  echo "  Admin   : ${ADMIN_USER:-admin}   (mot de passe inchangé — voir ${INSTALL_DIR}/.env)"
+  echo "  Admin   : ${ADMIN_USER:-admin}   (mot de passe inchangé - voir ${INSTALL_DIR}/.env)"
 else
   echo "  Admin   : ${ADMIN_USER:-admin} / ${ADMIN_PASSWORD}   (à changer dès la 1re connexion)"
   [ "${ADMIN_PASSWORD_GENERATED:-0}" = 1 ] && echo "            ↑ engendré au hasard : notez-le, il n'est pas affiché ailleurs"

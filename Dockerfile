@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # ─────────────────────────────────────────────────────────────────────────────
-# Kubuno — image « tout-en-un » (core + tous les modules) pour self-hosting.
+# Kubuno - image « tout-en-un » (core + tous les modules) pour self-hosting.
 #
 # Le core est un superviseur : au démarrage il scanne /usr/lib/kubuno/modules/,
 # lance chaque binaire module en processus enfant et lui injecte sa config
@@ -26,7 +26,7 @@ ARG MODULES="app books calendar chat code contacts drive flow forms forum assist
 
 # ── Stage 1 : compilation (Rust + Node) ──────────────────────────────────────
 # buildpack-deps (base de l'image rust) fournit déjà git, curl, pkg-config et
-# libssl-dev — nécessaires pour les crates -sys (reqwest/native-tls, etc.).
+# libssl-dev - nécessaires pour les crates -sys (reqwest/native-tls, etc.).
 FROM rust:1-bookworm AS builder
 ARG MODULES
 
@@ -34,7 +34,7 @@ ARG MODULES
 # cmake  : le module stt compile whisper.cpp depuis les sources (whisper-rs-sys).
 # clang  : whisper-rs-sys génère ses liaisons avec bindgen, qui charge libclang
 #          à l'exécution du script de build. Les runners GitHub l'ont d'office,
-#          cette image non — d'où un échec qui n'apparaissait QUE dans l'image.
+#          cette image non - d'où un échec qui n'apparaissait QUE dans l'image.
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends nodejs cmake clang libclang-dev \
     && rm -rf /var/lib/apt/lists/*

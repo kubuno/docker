@@ -11,7 +11,7 @@
 **/.build_number
 **/tsconfig.tsbuildinfo
 
-# Secrets & rootfs de build pré-assemblé — ne JAMAIS envoyer au démon
+# Secrets & rootfs de build pré-assemblé - ne JAMAIS envoyer au démon
 .env
 .env.*
 !.env.docker.example

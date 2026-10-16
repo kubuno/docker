@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# build.sh — compile le core + les modules listés et assemble le layout
+# build.sh - compile le core + les modules listés et assemble le layout
 # d'installation Kubuno dans $OUT (= rootfs prêt à copier dans une image).
 #
 # Conçu pour tourner DANS le builder Docker (SRC=/build, OUT=/out) ou sur

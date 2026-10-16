@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Kubuno — déploiement Docker self-hosted (pilote : core + drive).
+# Kubuno - déploiement Docker self-hosted (pilote : core + drive).
 #
 #   1. cp .env.docker.example .env      (puis renseigner les secrets)
 #   2. docker compose up --build -d
@@ -34,13 +34,13 @@ services:
       db:
         condition: service_healthy
     environment:
-      # Connexion DB — le core répercute ces credentials aux modules enfants.
+      # Connexion DB - le core répercute ces credentials aux modules enfants.
       KV__DATABASE__HOST: db
       KV__DATABASE__PORT: "5432"
       KV__DATABASE__USER: ${POSTGRES_USER:-kubuno}
       KV__DATABASE__PASSWORD: ${POSTGRES_PASSWORD:?définissez POSTGRES_PASSWORD dans .env}
       KV__DATABASE__DATABASE: ${POSTGRES_DB:-kubuno}
-      # Secrets — OBLIGATOIRES (voir .env.docker.example pour les générer).
+      # Secrets - OBLIGATOIRES (voir .env.docker.example pour les générer).
       KV__AUTH__JWT_SECRET: ${KUBUNO_JWT_SECRET:?définissez KUBUNO_JWT_SECRET dans .env}
       KV__SERVER__INTERNAL_SECRET: ${KUBUNO_INTERNAL_SECRET:?définissez KUBUNO_INTERNAL_SECRET dans .env}
       # Mettre à true derrière un reverse-proxy HTTPS.

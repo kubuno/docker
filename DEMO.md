@@ -94,7 +94,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compos
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.demo.yml up -d
 ```
 
-L'app écoute alors sur **`127.0.0.1:8090`** (loopback) — invisible depuis l'extérieur.
+L'app écoute alors sur **`127.0.0.1:8090`** (loopback) - invisible depuis l'extérieur.
 
 ## 4. Reverse-proxy nginx (sur l'hôte, en root) + TLS
 
@@ -131,7 +131,7 @@ inaccessible de l'extérieur même sans règle dédiée.
   taille max d'upload.
 - **Admin** : l'identifiant public de la démo est `admin` / `kubuno`, **fixé explicitement** par `install-demo.sh` (`KUBUNO_ADMIN_PASSWORD`). Le produit n'a plus de mot de passe par défaut : ailleurs, il est choisi dans l'assistant d'installation ou engendré au hasard. Pour le changer ici (ou le fixer au 1er boot via
   `KUBUNO_ADMIN_PASSWORD=…` dans `.env`).
-- **Reset périodique** (repartir propre chaque nuit) — cron de `kubuno-demo` :
+- **Reset périodique** (repartir propre chaque nuit) - cron de `kubuno-demo` :
   ```bash
   # crontab -e (utilisateur kubuno-demo)
   0 4 * * *  cd ~/kubuno && docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.demo.yml down -v && docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.demo.yml up -d
@@ -144,7 +144,7 @@ inaccessible de l'extérieur même sans règle dédiée.
 
 - `read_only: true` est la mesure la plus stricte ; si un module a besoin d'écrire
   hors des volumes (ex. transcodage `media`), retire **uniquement** `read_only`
-  pour `kubuno` — le reste du durcissement reste valable.
+  pour `kubuno` - le reste du durcissement reste valable.
 - Le core lance ses modules en sous-processus : compatible avec `cap_drop: ALL` +
   `no-new-privileges` (aucune capability nécessaire pour `fork`/`exec`).
 - Mises à jour : modifie `KUBUNO_TAG` dans `.env` puis relance `pull` + `up -d`.

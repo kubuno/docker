@@ -5,7 +5,7 @@ Déploiement self-hosted de Kubuno via Docker Compose : une image **tout-en-un**
 
 L'image embarque le **core** et l'ensemble des **modules** (drive, calendar,
 notes, mail, photos, office, media…). La liste est pilotée par l'argument de build
-`MODULES` — on peut donc construire un sous-ensemble (voir
+`MODULES` - on peut donc construire un sous-ensemble (voir
 [Choisir les modules](#choisir-les-modules)).
 
 ---
@@ -18,7 +18,7 @@ lui injecte sa configuration (URL du core, `internal_secret`, identifiants DB).
 
 L'image Docker ne réinvente donc rien : elle **reproduit le layout d'installation**
 (`/usr/lib/kubuno/modules/<id>/`, `/usr/share/kubuno/frontend`, `/etc/kubuno/`) et
-lance `kubuno-core`. Le superviseur démarre les modules tout seul — exactement comme
+lance `kubuno-core`. Le superviseur démarre les modules tout seul - exactement comme
 une installation `.deb`. Une seule image, un seul processus racine, configuration
 100 % par variables d'environnement.
 
@@ -127,7 +127,7 @@ définies dans `docker-compose.yml` (service `kubuno`). Quelques exemples utiles
 | `KV__LOGGING__FORMAT`             | `json`                       | `json` ou `pretty`                       |
 
 Le core **répercute automatiquement** les identifiants `KV__DATABASE__*` vers les
-modules enfants — pas besoin de les configurer module par module.
+modules enfants - pas besoin de les configurer module par module.
 
 ### HTTPS
 
@@ -143,8 +143,8 @@ Deux options, au choix :
 
 ## Données & persistance
 
-- `kubuno-db` — base PostgreSQL.
-- `kubuno-data` — `/var/lib/kubuno` (fichiers utilisateurs, données des modules, thèmes).
+- `kubuno-db` - base PostgreSQL.
+- `kubuno-data` - `/var/lib/kubuno` (fichiers utilisateurs, données des modules, thèmes).
 
 Sauvegarde minimale : `docker compose exec db pg_dump -U kubuno kubuno` + une copie
 du volume `kubuno-data`.
@@ -170,7 +170,7 @@ DOCKER="sudo docker" bash _tools/docker/publish.sh   # si hors groupe docker
 ```
 
 `publish.sh` accepte aussi `REGISTRY` / `NAMESPACE` / `IMAGE` / `MODULES` (cf. en-tête
-du script) — par exemple `REGISTRY=docker.io NAMESPACE=moncompte` pour Docker Hub.
+du script) - par exemple `REGISTRY=docker.io NAMESPACE=moncompte` pour Docker Hub.
 
 **Multi-architecture** (amd64 + arm64) : utiliser buildx
 (`docker buildx build --platform linux/amd64,linux/arm64 --push -t ghcr.io/kubuno/kubuno:<v> .`).
@@ -178,7 +178,7 @@ Par défaut l'image est mono-arch (celle de la machine de build).
 
 > Automatisation CI : comme l'image agrège les 21 dépôts, héberger le workflow
 > dans un dépôt dédié (`kubuno/docker`) qui `checkout` chaque dépôt puis appelle
-> `publish.sh` sur push de tag `v*` — même logique que les CI `.deb` par dépôt.
+> `publish.sh` sur push de tag `v*` - même logique que les CI `.deb` par dépôt.
 
 ---
 
@@ -216,7 +216,7 @@ via l'override image (cf. ci-dessous).
 attendu, et le runtime crée ses dossiers `data/temp/config` automatiquement.
 
 > Modules à query SQLx (`drive`, `media`) : le cache `.sqlx` est commité et le build
-> tourne en `SQLX_OFFLINE=true` — rien de spécial. `media` nécessite `ffmpeg`, déjà
+> tourne en `SQLX_OFFLINE=true` - rien de spécial. `media` nécessite `ffmpeg`, déjà
 > installé dans l'image runtime.
 
 ---
@@ -224,7 +224,7 @@ attendu, et le runtime crée ses dossiers `data/temp/config` automatiquement.
 ## Hôte à espace disque limité
 
 Si `/var/lib/docker` n'a pas la place, compilez sur l'hôte (là où vous avez de
-l'espace) puis empaquetez le rootfs via `Dockerfile.local` — même script de build :
+l'espace) puis empaquetez le rootfs via `Dockerfile.local` - même script de build :
 
 ```bash
 # 1. Assembler le rootfs sur l'hôte (compile core + modules).

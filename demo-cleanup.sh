@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# demo-cleanup.sh — supprime les comptes de démo créés il y a plus de TTL_HOURS.
+# demo-cleanup.sh - supprime les comptes de démo créés il y a plus de TTL_HOURS.
 #
 # Passe par l'API admin (DELETE /admin/users/:id) → émet UserDeleted → les modules
 # nettoient les fichiers de l'utilisateur (libère le disque). Garde l'admin et

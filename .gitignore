@@ -1,4 +1,4 @@
-# Composants clonés au build (jamais commités ici — voir .github/workflows/build.yml)
+# Composants clonés au build (jamais commités ici - voir .github/workflows/build.yml)
 /core/
 /app/
 /books/
